@@ -22,6 +22,9 @@ export default async function handleRequest(
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    scriptSrc: ['https://cdn.pendo.io'],
+    connectSrc: ['https://app.pendo.io'],
+    imgSrc: ['https://cdn.pendo.io', 'https://app.pendo.io'],
   });
 
   const body = await renderToReadableStream(
