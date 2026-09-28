@@ -12,3 +12,13 @@ if (!window.location.origin.includes('webcache.googleusercontent.com')) {
     );
   });
 }
+
+// Initialize Pendo with an anonymous visitor.
+// The SDK resolves visitor identity from cookies/localStorage if available.
+if (typeof window !== 'undefined' && window.pendo) {
+  window.pendo.initialize({
+    visitor: {
+      id: '',
+    },
+  });
+}
