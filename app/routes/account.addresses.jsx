@@ -1,4 +1,5 @@
 import {data} from '@shopify/remix-oxygen';
+import {pendoTrack} from '~/lib/pendo.server';
 import {
   Form,
   useActionData,
@@ -101,6 +102,20 @@ export async function action({request, context}) {
             throw new Error('Customer address create failed.');
           }
 
+          // Pendo Track Event: customer address created
+          pendoTrack({
+            event: 'customer_address_created',
+            visitorId: 'authenticated_user',
+            properties: {
+              territoryCode: address.territoryCode || '',
+              zoneCode: address.zoneCode || '',
+              isDefaultAddress: String(defaultAddress),
+              success: 'true',
+            },
+            env: context.env,
+            waitUntil: context.waitUntil,
+          });
+
           return {
             error: null,
             createdAddress: data?.customerAddressCreate?.customerAddress,
@@ -150,6 +165,20 @@ export async function action({request, context}) {
             throw new Error('Customer address update failed.');
           }
 
+          // Pendo Track Event: customer address updated
+          pendoTrack({
+            event: 'customer_address_updated',
+            visitorId: 'authenticated_user',
+            properties: {
+              territoryCode: address.territoryCode || '',
+              zoneCode: address.zoneCode || '',
+              isDefaultAddress: String(defaultAddress),
+              success: 'true',
+            },
+            env: context.env,
+            waitUntil: context.waitUntil,
+          });
+
           return {
             error: null,
             updatedAddress: address,
@@ -194,6 +223,17 @@ export async function action({request, context}) {
           if (!data?.customerAddressDelete?.deletedAddressId) {
             throw new Error('Customer address delete failed.');
           }
+
+          // Pendo Track Event: customer address deleted
+          pendoTrack({
+            event: 'customer_address_deleted',
+            visitorId: 'authenticated_user',
+            properties: {
+              success: 'true',
+            },
+            env: context.env,
+            waitUntil: context.waitUntil,
+          });
 
           return {error: null, deletedAddress: addressId};
         } catch (error) {

@@ -23,19 +23,35 @@ export function CartSummary({cart, layout}) {
       </dl>
       <CartDiscounts discountCodes={cart.discountCodes} />
       <CartGiftCard giftCardCodes={cart.appliedGiftCards} />
-      <CartCheckoutActions checkoutUrl={cart.checkoutUrl} />
+      <CartCheckoutActions checkoutUrl={cart.checkoutUrl} cart={cart} />
     </div>
   );
 }
 /**
- * @param {{checkoutUrl?: string}}
+ * @param {{checkoutUrl?: string; cart?: CartApiQueryFragment}}
  */
-function CartCheckoutActions({checkoutUrl}) {
+function CartCheckoutActions({checkoutUrl, cart}) {
   if (!checkoutUrl) return null;
+
+  const handleCheckoutClick = () => {
+    // Pendo Track Event: checkout initiated
+    if (typeof window !== 'undefined' && window.pendo) {
+      window.pendo.track('checkout_initiated', {
+        cartId: cart?.id || '',
+        subtotalAmount: cart?.cost?.subtotalAmount?.amount || '',
+        currencyCode: cart?.cost?.subtotalAmount?.currencyCode || '',
+        totalQuantity: String(cart?.totalQuantity || 0),
+        discountCodesApplied: String(
+          cart?.discountCodes?.filter((d) => d.applicable)?.length || 0,
+        ),
+        hasGiftCards: String((cart?.appliedGiftCards?.length || 0) > 0),
+      });
+    }
+  };
 
   return (
     <div>
-      <a href={checkoutUrl} target="_self">
+      <a href={checkoutUrl} target="_self" onClick={handleCheckoutClick}>
         <p>Continue to Checkout &rarr;</p>
       </a>
       <br />

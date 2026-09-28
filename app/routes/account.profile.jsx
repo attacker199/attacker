@@ -1,4 +1,5 @@
 import {CUSTOMER_UPDATE_MUTATION} from '~/graphql/customer-account/CustomerUpdateMutation';
+import {pendoTrack} from '~/lib/pendo.server';
 import {data} from '@shopify/remix-oxygen';
 import {
   Form,
@@ -64,6 +65,18 @@ export async function action({request, context}) {
     if (!data?.customerUpdate?.customer) {
       throw new Error('Customer profile update failed.');
     }
+
+    // Pendo Track Event: customer profile updated
+    pendoTrack({
+      event: 'customer_profile_updated',
+      visitorId: 'authenticated_user',
+      properties: {
+        fieldsUpdated: Object.keys(customer).join(', '),
+        success: 'true',
+      },
+      env: context.env,
+      waitUntil: context.waitUntil,
+    });
 
     return {
       error: null,

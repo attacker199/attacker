@@ -2,6 +2,7 @@ import {useLoaderData} from '@remix-run/react';
 import {CartForm} from '@shopify/hydrogen';
 import {data} from '@shopify/remix-oxygen';
 import {CartMain} from '~/components/CartMain';
+import {pendoTrack} from '~/lib/pendo.server';
 
 /**
  * @type {MetaFunction}
@@ -33,14 +34,77 @@ export async function action({request, context}) {
   let result;
 
   switch (action) {
-    case CartForm.ACTIONS.LinesAdd:
+    case CartForm.ACTIONS.LinesAdd: {
       result = await cart.addLines(inputs.lines);
+      // Pendo Track Event: product added to cart
+      if (result?.cart) {
+        const addedLine = result.cart.lines?.nodes?.find(
+          (node) => node.merchandise?.id === inputs.lines?.[0]?.merchandiseId,
+        );
+        pendoTrack({
+          event: 'product_added_to_cart',
+          visitorId:
+            result.cart.buyerIdentity?.customer?.id ||
+            result.cart.id ||
+            'anonymous',
+          properties: {
+            productId: addedLine?.merchandise?.product?.id || '',
+            variantId:
+              addedLine?.merchandise?.id ||
+              inputs.lines?.[0]?.merchandiseId ||
+              '',
+            variantTitle: addedLine?.merchandise?.title || '',
+            quantity: String(inputs.lines?.[0]?.quantity || 1),
+            price: addedLine?.merchandise?.price?.amount || '',
+            currencyCode: addedLine?.merchandise?.price?.currencyCode || '',
+            productTitle: addedLine?.merchandise?.product?.title || '',
+            productVendor: addedLine?.merchandise?.product?.vendor || '',
+            cartId: result.cart.id || '',
+          },
+          env: context.env,
+          waitUntil: context.waitUntil,
+        });
+      }
       break;
+    }
     case CartForm.ACTIONS.LinesUpdate:
       result = await cart.updateLines(inputs.lines);
+      // Pendo Track Event: cart line quantity updated
+      if (result?.cart) {
+        pendoTrack({
+          event: 'cart_line_quantity_updated',
+          visitorId:
+            result.cart.buyerIdentity?.customer?.id ||
+            result.cart.id ||
+            'anonymous',
+          properties: {
+            lineId: String(inputs.lines?.[0]?.id || ''),
+            newQuantity: String(inputs.lines?.[0]?.quantity || ''),
+            cartId: result.cart.id || '',
+          },
+          env: context.env,
+          waitUntil: context.waitUntil,
+        });
+      }
       break;
     case CartForm.ACTIONS.LinesRemove:
       result = await cart.removeLines(inputs.lineIds);
+      // Pendo Track Event: cart line removed
+      if (result?.cart) {
+        pendoTrack({
+          event: 'cart_line_removed',
+          visitorId:
+            result.cart.buyerIdentity?.customer?.id ||
+            result.cart.id ||
+            'anonymous',
+          properties: {
+            lineIds: (inputs.lineIds || []).join(', '),
+            cartId: result.cart.id || '',
+          },
+          env: context.env,
+          waitUntil: context.waitUntil,
+        });
+      }
       break;
     case CartForm.ACTIONS.DiscountCodesUpdate: {
       const formDiscountCode = inputs.discountCode;
@@ -52,6 +116,23 @@ export async function action({request, context}) {
       discountCodes.push(...inputs.discountCodes);
 
       result = await cart.updateDiscountCodes(discountCodes);
+      // Pendo Track Event: discount code applied
+      if (result?.cart) {
+        pendoTrack({
+          event: 'discount_code_applied',
+          visitorId:
+            result.cart.buyerIdentity?.customer?.id ||
+            result.cart.id ||
+            'anonymous',
+          properties: {
+            discountCode: formDiscountCode || '',
+            discountCodesCount: String(discountCodes.length),
+            cartId: result.cart.id || '',
+          },
+          env: context.env,
+          waitUntil: context.waitUntil,
+        });
+      }
       break;
     }
     case CartForm.ACTIONS.GiftCardCodesUpdate: {
@@ -64,6 +145,22 @@ export async function action({request, context}) {
       giftCardCodes.push(...inputs.giftCardCodes);
 
       result = await cart.updateGiftCardCodes(giftCardCodes);
+      // Pendo Track Event: gift card applied
+      if (result?.cart) {
+        pendoTrack({
+          event: 'gift_card_applied',
+          visitorId:
+            result.cart.buyerIdentity?.customer?.id ||
+            result.cart.id ||
+            'anonymous',
+          properties: {
+            giftCardCodesCount: String(giftCardCodes.length),
+            cartId: result.cart.id || '',
+          },
+          env: context.env,
+          waitUntil: context.waitUntil,
+        });
+      }
       break;
     }
     case CartForm.ACTIONS.BuyerIdentityUpdate: {
