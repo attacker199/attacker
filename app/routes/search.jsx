@@ -1,4 +1,5 @@
 import {useLoaderData} from '@remix-run/react';
+import {useEffect} from 'react';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/SearchForm';
 import {SearchResults} from '~/components/SearchResults';
@@ -35,6 +36,26 @@ export async function loader({request, context}) {
 export default function SearchPage() {
   /** @type {LoaderReturnData} */
   const {type, term, result, error} = useLoaderData();
+
+  // Pendo Track Event: search executed
+  useEffect(() => {
+    if (!term || type === 'predictive') return;
+    if (typeof window !== 'undefined' && window.pendo) {
+      window.pendo.track('search_executed', {
+        searchTerm: term,
+        totalResults: String(result?.total || 0),
+        productResultsCount: String(
+          result?.items?.products?.nodes?.length || 0,
+        ),
+        pageResultsCount: String(result?.items?.pages?.nodes?.length || 0),
+        articleResultsCount: String(
+          result?.items?.articles?.nodes?.length || 0,
+        ),
+        hasResults: String((result?.total || 0) > 0),
+      });
+    }
+  }, [term, type, result]);
+
   if (type === 'predictive') return null;
 
   return (
