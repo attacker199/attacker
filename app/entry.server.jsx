@@ -22,6 +22,26 @@ export default async function handleRequest(
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    directives: {
+      scriptSrc: [
+        'https://cdn.pendo.io',
+        'https://pendo-io-static.storage.googleapis.com',
+      ],
+      connectSrc: ['https://app.pendo.io', 'https://data.pendo.io'],
+      imgSrc: [
+        'https://cdn.pendo.io',
+        'https://pendo-io-static.storage.googleapis.com',
+        'https://app.pendo.io',
+      ],
+      frameSrc: ['https://app.pendo.io'],
+      childSrc: ['https://app.pendo.io'],
+      styleSrc: [
+        "'unsafe-inline'",
+        'https://cdn.pendo.io',
+        'https://pendo-io-static.storage.googleapis.com',
+        'https://app.pendo.io',
+      ],
+    },
   });
 
   const body = await renderToReadableStream(

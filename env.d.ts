@@ -18,6 +18,12 @@ declare global {
    */
   const process: {env: {NODE_ENV: 'production' | 'development'}};
 
+  /**
+   * Pendo analytics SDK global — loaded by the install snippet in root.jsx.
+   */
+  // eslint-disable-next-line no-var
+  var pendo: any;
+
   interface Env extends HydrogenEnv {
     // declare additional Env parameter use in the fetch handler and Remix loader context here
   }

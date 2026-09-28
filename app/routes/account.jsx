@@ -1,5 +1,6 @@
 import {data as remixData} from '@shopify/remix-oxygen';
 import {Form, NavLink, Outlet, useLoaderData} from '@remix-run/react';
+import {useEffect} from 'react';
 import {CUSTOMER_DETAILS_QUERY} from '~/graphql/customer-account/CustomerDetailsQuery';
 
 export function shouldRevalidate() {
@@ -31,6 +32,22 @@ export async function loader({context}) {
 export default function AccountLayout() {
   /** @type {LoaderReturnData} */
   const {customer} = useLoaderData();
+
+  // Identify the signed-in visitor with Pendo
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.pendo && customer) {
+      window.pendo.identify({
+        visitor: {
+          id: customer.id,
+          full_name: [customer.firstName, customer.lastName]
+            .filter(Boolean)
+            .join(' '),
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+        },
+      });
+    }
+  }, [customer]);
 
   const heading = customer
     ? customer.firstName
@@ -79,7 +96,16 @@ function AccountMenu() {
 
 function Logout() {
   return (
-    <Form className="account-logout" method="POST" action="/account/logout">
+    <Form
+      className="account-logout"
+      method="POST"
+      action="/account/logout"
+      onSubmit={() => {
+        if (typeof window !== 'undefined' && window.pendo) {
+          window.pendo.clearSession();
+        }
+      }}
+    >
       &nbsp;<button type="submit">Sign out</button>
     </Form>
   );
